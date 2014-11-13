@@ -10,13 +10,10 @@ Very Simple Templating Engine
 
 ```bash
 
-local grove_id="001"
-local name="ferron"
-
-
-./tmpl.sh "Grove id {{grove_id}} and name {{name}}"
+# USER is a global variable that will be transposed to your current user name
+./tmpl.sh "Hello {{USER}}, Your Grove id is {{grove_id}}"
 
 # transposes to :
-# ./tmpl.sh "Grove id grove_id and name ferron"
+# ./tmpl.sh "Hello ferron, Your Grove id is 001"
 
 ```

@@ -4,7 +4,7 @@
 # simple templating engine for bash
 # ======================================
 
-if [[ ! -f "$1" ]]; then
+if [[ -z "$1" ]]; then
     echo "Usage: VAR=value $0 template" >&2
     exit 1
 fi
