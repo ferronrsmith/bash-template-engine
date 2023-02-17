@@ -5,11 +5,17 @@
 # ======================================
 
 if [[ -z "$1" ]]; then
-    echo "Usage: VAR=value $0 template" >&2
-    exit 1
+    template=$(cat; ret=$?; echo . && exit "$ret")
+    ret=$? template=${template%.}
+else
+    template="${1}"
 fi
 
-template="${1}"
+if [[ -z "$template" ]]; then
+    echo "Usage: VAR=value $0 template" >&2
+    echo "       VAR=value $0 template < /my/file" >&2
+    exit 1
+fi
 
 if ! echo "$template" | grep -qoE '^\{\{[A-Za-z0-9_]+(=.+)?\}\}'; then
     echo "Warning: No variable was found in $template, syntax is {{VAR}}" >&2
