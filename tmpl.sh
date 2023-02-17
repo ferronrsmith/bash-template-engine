@@ -17,7 +17,7 @@ if [[ -z "$template" ]]; then
     exit 1
 fi
 
-if ! echo "$template" | grep -qoE '\{\{[A-Za-z0-9_]+(=.+)?\}\}'; then
+if ! echo "$template" | grep -qoP '\{\{[A-Za-z0-9_]+(=.+?)?\}\}'; then
     echo "Warning: No variable was found in $template, syntax is {{VAR}}" >&2
     exit 0
 fi
@@ -33,7 +33,7 @@ replaces=""
 # Reads default values defined as {{VAR=value}} and delete those lines
 # There are evaluated, so you can do {{PATH=$HOME}} or {{PATH=`pwd`}}
 # You can even reference variables defined in the template before
-defaults=$(echo "${template}" | grep -oE '^\{\{[A-Za-z0-9_]+=.+\}\}' | sed -e 's/^{{//' -e 's/}}$//')
+defaults=$(echo "${template}" | grep -oP '\{\{[A-Za-z0-9_]+=.+?\}\}' | sed -e 's/^{{//' -e 's/}}$//')
 for default in ${defaults}; do
     var=$(echo "${default}" | grep -oE "^[A-Za-z0-9_]+")
     current="$(var_value ${var})"
