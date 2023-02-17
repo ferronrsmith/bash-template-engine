@@ -1,17 +1,17 @@
-#!/bin/bash
+#!/bin/sh
 
 # ======================================
-# simple templating engine for bash
+# simple templating engine for sh
 # ======================================
 
-if [[ -z "$1" ]]; then
+if [ -z "$1" ]; then
     template=$(cat; ret=$?; echo . && exit "$ret")
     ret=$? template=${template%.}
 else
     template="${1}"
 fi
 
-if [[ -z "$template" ]]; then
+if [ -z "$template" ]; then
     echo "Usage: VAR=value $0 template" >&2
     echo "       VAR=value $0 template < /my/file" >&2
     exit 1
@@ -39,7 +39,7 @@ for default in ${defaults}; do
     current="$(var_value ${var})"
 
     # Replace only if var is not set
-    if [[ -z "${current}" ]]; then
+    if [ -z "${current}" ]; then
         eval ${default}
     fi
 
@@ -54,7 +54,7 @@ vars=$(echo ${vars} | sort | uniq)
 # Replace all {{VAR}} by $VAR value
 for var in ${vars}; do
     value="$(var_value ${var})"
-    if [[ -z "${value}" ]]; then
+    if [ -z "${value}" ]; then
         echo "Warning: ${var} is not defined and no default is set, replacing by empty" >&2
     fi
 
