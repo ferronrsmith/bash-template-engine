@@ -10,12 +10,13 @@ if [[ -z "$1" ]]; then
 fi
 
 template="${1}"
-vars=$(echo ${template} | grep -oE '\{\{[A-Za-z0-9_]+\}\}' | sort | uniq | sed -e 's/^{{//' -e 's/}}$//')
 
-if [[ -z "$vars" ]]; then
+if ! echo "$template" | grep -qoE '^\{\{[A-Za-z0-9_]+(=.+)?\}\}'; then
     echo "Warning: No variable was found in $template, syntax is {{VAR}}" >&2
     exit 0
 fi
+
+vars=$(echo ${template} | grep -oE '\{\{[A-Za-z0-9_]+\}\}' | sort | uniq | sed -e 's/^{{//' -e 's/}}$//')
 
 var_value() {
     eval echo \$$1
