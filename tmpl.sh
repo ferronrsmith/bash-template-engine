@@ -17,7 +17,7 @@ if [[ -z "$template" ]]; then
     exit 1
 fi
 
-if ! echo "$template" | grep -qoE '^\{\{[A-Za-z0-9_]+(=.+)?\}\}'; then
+if ! echo "$template" | grep -qoE '\{\{[A-Za-z0-9_]+(=.+)?\}\}'; then
     echo "Warning: No variable was found in $template, syntax is {{VAR}}" >&2
     exit 0
 fi
