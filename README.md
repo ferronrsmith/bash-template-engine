@@ -1,7 +1,7 @@
-Bash Template Engine
+Shell Template Engine
 ====================
 
-simple templating engine for bash
+simple templating engine for posix compliant shells
 
 Very Simple Templating Engine
 
