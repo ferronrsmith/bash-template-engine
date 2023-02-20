@@ -4,17 +4,14 @@
 # simple templating engine for sh
 # ======================================
 
-if [ -z "$1" ]; then
+if [ $# -eq 0 ]; then
     template=$(cat; ret=$?; echo . && exit "$ret")
     ret=$? template=${template%.}
 else
-    template="${1}"
-fi
-
-if [ -z "$template" ]; then
-    echo "Usage: VAR=value $0 template" >&2
-    echo "       VAR=value $0 template < /my/file" >&2
-    exit 1
+    tmp="$IFS"
+    IFS=
+    template="$*"
+    IFS="$tmp"
 fi
 
 RE_VARNAME='[A-Za-z_][A-Za-z0-9_]*'
