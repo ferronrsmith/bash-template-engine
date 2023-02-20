@@ -17,12 +17,14 @@ if [ -z "$template" ]; then
     exit 1
 fi
 
-if ! echo "$template" | grep -qoP '\{\{[A-Za-z0-9_]+(=.+?)?\}\}'; then
+RE_VARNAME='[A-Za-z_][A-Za-z0-9_]*'
+
+if ! echo "$template" | grep -qoP '\{\{'"$RE_VARNAME"'(=.+?)?\}\}'; then
     echo "Warning: No variable was found in template, syntax is {{VAR}}" >&2
     exit 0
 fi
 
-vars=$(echo ${template} | grep -oE '\{\{[A-Za-z0-9_]+\}\}' | sort | uniq | sed -e 's/^{{//' -e 's/}}$//')
+vars=$(echo ${template} | grep -oE '\{\{'"$RE_VARNAME"'\}\}' | sort | uniq | sed -e 's/^{{//' -e 's/}}$//')
 
 var_value() {
     eval echo \$$1
@@ -33,9 +35,9 @@ replaces=""
 # Reads default values defined as {{VAR=value}} and delete those lines
 # There are evaluated, so you can do {{PATH=$HOME}} or {{PATH=`pwd`}}
 # You can even reference variables defined in the template before
-defaults=$(echo "${template}" | grep -oP '\{\{[A-Za-z0-9_]+=.+?\}\}' | sed -e 's/^{{//' -e 's/}}$//')
+defaults=$(echo "${template}" | grep -oP '\{\{'"$RE_VARNAME"'+=.+?\}\}' | sed -e 's/^{{//' -e 's/}}$//')
 for default in ${defaults}; do
-    var=$(echo "${default}" | grep -oE "^[A-Za-z0-9_]+")
+    var=$(echo "${default}" | grep -oE "^$RE_VARNAME")
     current="$(var_value ${var})"
 
     # Replace only if var is not set
