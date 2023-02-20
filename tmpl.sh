@@ -21,6 +21,7 @@ RE_VARNAME='[A-Za-z_][A-Za-z0-9_]*'
 
 if ! echo "$template" | grep -qoP '\{\{'"$RE_VARNAME"'(=.+?)?\}\}'; then
     echo "Warning: No variable was found in template, syntax is {{VAR}}" >&2
+    printf '%s' "$template"
     exit 0
 fi
 
