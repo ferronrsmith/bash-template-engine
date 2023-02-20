@@ -17,11 +17,15 @@ setup() {
 }
 
 @test 'name not starting with alpha or underscore' {
-    run tmpl.sh '{{2my_var}}'
-    assert_output 'Warning: No variable was found in template, syntax is {{VAR}}'
+    bats_require_minimum_version 1.5.0
+    run --separate-stderr tmpl.sh '{{2my_var}}'
+    assert_output '{{2my_var}}'
+    assert_equal "$stderr" 'Warning: No variable was found in template, syntax is {{VAR}}'
 }
 
 @test 'word consisting invalid charactars' {
-    run tmpl.sh '{{my-var}}'
-    assert_output 'Warning: No variable was found in template, syntax is {{VAR}}'
+    bats_require_minimum_version 1.5.0
+    run --separate-stderr tmpl.sh '{{my-var}}'
+    assert_output '{{my-var}}'
+    assert_equal "$stderr" 'Warning: No variable was found in template, syntax is {{VAR}}'
 }
