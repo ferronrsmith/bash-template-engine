@@ -25,7 +25,7 @@ fi
 vars=$(printf '%s' "${template}" | grep -oE '\{\{'"$RE_VARNAME"'\}\}' | sort | uniq | sed -e 's/^{{//' -e 's/}}$//')
 
 var_value() {
-    eval echo \$$1
+    eval printf '%s' "\$$1"
 }
 
 replaces=""
@@ -36,11 +36,11 @@ replaces=""
 defaults=$(printf '%s' "${template}" | grep -oP '\{\{'"$RE_VARNAME"'+=.+?\}\}' | sed -e 's/^{{//' -e 's/}}$//')
 for default in ${defaults}; do
     var=$(printf '%s' "${default}" | grep -oE "^$RE_VARNAME")
-    current="$(var_value ${var})"
+    current="$(var_value "$var")"
 
     # Replace only if var is not set
     if [ -z "${current}" ]; then
-        eval ${default}
+        eval "$default"
     fi
 
     # remove define line
@@ -53,7 +53,7 @@ vars=$(printf '%s' "$vars" | sort | uniq)
 
 # Replace all {{VAR}} by $VAR value
 for var in ${vars}; do
-    value="$(var_value ${var})"
+    value="$(var_value "$var")"
     if [ -z "${value}" ]; then
         echo "Warning: ${var} is not defined and no default is set, replacing with empty value" >&2
     fi
@@ -62,4 +62,4 @@ for var in ${vars}; do
     value=$(printf '%s' "$value" | sed 's/\//\\\//g');
     replaces="-e 's/{{$var}}/${value}/g' ${replaces}"
 done
-printf '%s' "${template}" | eval sed ${replaces}
+printf '%s' "${template}" | eval "sed $replaces"
