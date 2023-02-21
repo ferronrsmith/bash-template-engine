@@ -22,7 +22,7 @@ if ! echo "$template" | grep -qoP '\{\{'"$RE_VARNAME"'(=.+?)?\}\}'; then
     exit 0
 fi
 
-vars=$(echo ${template} | grep -oE '\{\{'"$RE_VARNAME"'\}\}' | sort | uniq | sed -e 's/^{{//' -e 's/}}$//')
+vars=$(printf '%s' "${template}" | grep -oE '\{\{'"$RE_VARNAME"'\}\}' | sort | uniq | sed -e 's/^{{//' -e 's/}}$//')
 
 var_value() {
     eval echo \$$1
@@ -33,9 +33,9 @@ replaces=""
 # Reads default values defined as {{VAR=value}} and delete those lines
 # There are evaluated, so you can do {{PATH=$HOME}} or {{PATH=`pwd`}}
 # You can even reference variables defined in the template before
-defaults=$(echo "${template}" | grep -oP '\{\{'"$RE_VARNAME"'+=.+?\}\}' | sed -e 's/^{{//' -e 's/}}$//')
+defaults=$(printf '%s' "${template}" | grep -oP '\{\{'"$RE_VARNAME"'+=.+?\}\}' | sed -e 's/^{{//' -e 's/}}$//')
 for default in ${defaults}; do
-    var=$(echo "${default}" | grep -oE "^$RE_VARNAME")
+    var=$(printf '%s' "${default}" | grep -oE "^$RE_VARNAME")
     current="$(var_value ${var})"
 
     # Replace only if var is not set
@@ -49,7 +49,7 @@ for default in ${defaults}; do
     ${current}"
 done
 
-vars=$(echo ${vars} | sort | uniq)
+vars=$(printf '%s' "$vars" | sort | uniq)
 
 # Replace all {{VAR}} by $VAR value
 for var in ${vars}; do
@@ -59,8 +59,7 @@ for var in ${vars}; do
     fi
 
     # Escape slashes
-    value=$(echo "${value}" | sed 's/\//\\\//g');
+    value=$(printf '%s' "$value" | sed 's/\//\\\//g');
     replaces="-e 's/{{$var}}/${value}/g' ${replaces}"
 done
-echo "${template}" | eval sed ${replaces}
-
+printf '%s' "${template}" | eval sed ${replaces}
