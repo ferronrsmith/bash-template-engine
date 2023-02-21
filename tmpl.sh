@@ -5,15 +5,19 @@
 # ======================================
 
 if [ $# -eq 0 ]; then
+    # read from stdin if no argument is given
+    # preserv newline at end of input
     template=$(cat; ret=$?; echo . && exit "$ret")
     ret=$? template=${template%.}
 else
+    # consume all arguments as one big template
     xIFS="$IFS"
     IFS=
     template="$*"
     IFS="$xIFS"
 fi
 
+# regex for a valid identifier
 RE_VARNAME='[A-Za-z_][A-Za-z0-9_]*'
 
 if ! echo "$template" | grep -qoP '\{\{'"$RE_VARNAME"'(=.+?)?\}\}'; then
@@ -22,6 +26,8 @@ if ! echo "$template" | grep -qoP '\{\{'"$RE_VARNAME"'(=.+?)?\}\}'; then
     exit 0
 fi
 
+# escapes given character
+# escape_delimiter <char to escape> [text to process, ...]
 escape_delimiter() {
     delimiter="$1"
     shift
