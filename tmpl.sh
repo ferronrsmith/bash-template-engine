@@ -4,28 +4,33 @@
 # simple templating engine for sh
 # ======================================
 
-if [ -z "$1" ]; then
+if [ $# -eq 0 ]; then
+    # read from stdin if no argument is given
+    # preserv newline at end of input
     template=$(cat; ret=$?; echo . && exit "$ret")
     ret=$? template=${template%.}
 else
-    template="${1}"
+    # consume all arguments as one big template
+    xIFS="$IFS"
+    IFS=
+    template="$*"
+    IFS="$xIFS"
 fi
 
-if [ -z "$template" ]; then
-    echo "Usage: VAR=value $0 template" >&2
-    echo "       VAR=value $0 template < /my/file" >&2
-    exit 1
-fi
+# regex for a valid identifier
+RE_VARNAME='[A-Za-z_][A-Za-z0-9_]*'
 
-if ! echo "$template" | grep -qoP '\{\{[A-Za-z0-9_]+(=.+?)?\}\}'; then
-    echo "Warning: No variable was found in $template, syntax is {{VAR}}" >&2
-    exit 0
-fi
-
-vars=$(echo ${template} | grep -oE '\{\{[A-Za-z0-9_]+\}\}' | sort | uniq | sed -e 's/^{{//' -e 's/}}$//')
-
-var_value() {
-    eval echo \$$1
+# escapes given character
+# escape_delimiter <char to escape> [text to process, ...]
+escape_delimiter() {
+    delimiter="$1"
+    shift
+    if [ "$delimiter" = '#' ]; then
+        DELIM='|'
+    else
+        DELIM='#'
+    fi
+    printf '%s' "$@" | sed -e "s${DELIM}[${delimiter}]${DELIM}\\\\${delimiter}${DELIM}g"
 }
 
 replaces=""
@@ -33,34 +38,42 @@ replaces=""
 # Reads default values defined as {{VAR=value}} and delete those lines
 # There are evaluated, so you can do {{PATH=$HOME}} or {{PATH=`pwd`}}
 # You can even reference variables defined in the template before
-defaults=$(echo "${template}" | grep -oP '\{\{[A-Za-z0-9_]+=.+?\}\}' | sed -e 's/^{{//' -e 's/}}$//')
+defaults=$(printf '%s' "${template}" | grep -oP '\{\{'"$RE_VARNAME"'+=.+?\}\}' | sed -e 's/^{{//' -e 's/}}$//')
+xIFS="$IFS"
+IFS=${IFS#??} # IFS is only newline
 for default in ${defaults}; do
-    var=$(echo "${default}" | grep -oE "^[A-Za-z0-9_]+")
-    current="$(var_value ${var})"
+    var=${default%%=*} # variable name is everything before equal sign
 
     # Replace only if var is not set
-    if [ -z "${current}" ]; then
-        eval ${default}
+    eval "isset=\${$var+x}"
+    if [ -z "$isset" ]; then
+        current=${default#*=} # value is everthing after equal sign
+        eval "export $var=\"$current\""
     fi
+    eval "current=\"\${$var}\""
 
-    # remove define line
-    replaces="-e '/^{{${var}=/d' ${replaces}"
-    vars="${vars}
-    ${current}"
+    # replace define line
+    current=$(escape_delimiter '/' "$current")
+    replaces="-e 's/{{${var}=[^}]\+}}/$current/g' ${replaces}"
 done
 
-vars=$(echo ${vars} | sort | uniq)
-
 # Replace all {{VAR}} by $VAR value
+vars=$(printf '%s' "${template}" | grep -oE '\{\{'"$RE_VARNAME"'\}\}' | sort -u | sed -e 's/^{{//' -e 's/}}$//')
 for var in ${vars}; do
-    value="$(var_value ${var})"
-    if [ -z "${value}" ]; then
-        echo "Warning: ${var} is not defined and no default is set, replacing by empty" >&2
+    eval "isset=\${$var+x}"
+    if [ -z "$isset" ]; then
+        echo "Warning: ${var} is not defined and no default is set, replacing with empty value" >&2
     fi
 
     # Escape slashes
-    value=$(echo "${value}" | sed 's/\//\\\//g');
+    eval "value=\$${var}"
+    value=$(escape_delimiter '/' "$value")
     replaces="-e 's/{{$var}}/${value}/g' ${replaces}"
 done
-echo "${template}" | eval sed ${replaces}
 
+if [ -z "$replaces" ]; then
+    sed_script='cat'
+else
+    sed_script="sed $replaces"
+fi
+printf '%s' "${template}" | eval "$sed_script"
