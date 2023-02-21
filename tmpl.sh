@@ -8,10 +8,10 @@ if [ $# -eq 0 ]; then
     template=$(cat; ret=$?; echo . && exit "$ret")
     ret=$? template=${template%.}
 else
-    tmp="$IFS"
+    xIFS="$IFS"
     IFS=
     template="$*"
-    IFS="$tmp"
+    IFS="$xIFS"
 fi
 
 RE_VARNAME='[A-Za-z_][A-Za-z0-9_]*'
@@ -28,25 +28,40 @@ var_value() {
     eval printf '%s' "\$$1"
 }
 
+escape_delimiter() {
+    delimiter="$1"
+    shift
+    if [ "$delimiter" = '#' ]; then
+        DELIM='|'
+    else
+        DELIM='#'
+    fi
+    printf '%s' "$@" | sed -e "s${DELIM}[${delimiter}]${DELIM}\\\\${delimiter}${DELIM}g"
+}
+
 replaces=""
 
 # Reads default values defined as {{VAR=value}} and delete those lines
 # There are evaluated, so you can do {{PATH=$HOME}} or {{PATH=`pwd`}}
 # You can even reference variables defined in the template before
 defaults=$(printf '%s' "${template}" | grep -oP '\{\{'"$RE_VARNAME"'+=.+?\}\}' | sed -e 's/^{{//' -e 's/}}$//')
+xIFS="$IFS"
+IFS=${IFS#??} # IFS is only newline
 for default in ${defaults}; do
-    var=$(printf '%s' "${default}" | grep -oE "^$RE_VARNAME")
-    current="$(var_value "$var")"
+    var=${default%%=*} # variable name is everything before equal sign
 
     # Replace only if var is not set
-    if [ -z "${current}" ]; then
-        eval "$default"
+    eval "isset=\${$var+x}"
+    if [ -z "$isset" ]; then
+        current=${default#*=} # value is everthing after equal sign
+        eval "export $var='$current'"
+    else
+        current=$(eval "\${$var}")
     fi
 
-    # remove define line
-    replaces="-e '/^{{${var}=/d' ${replaces}"
-    vars="${vars}
-    ${current}"
+    # replace define line
+    current=$(escape_delimiter '/' "$current")
+    replaces="-e 's/{{${var}=[^}]\+}}/$current/g' ${replaces}"
 done
 
 vars=$(printf '%s' "$vars" | sort | uniq)
