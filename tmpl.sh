@@ -22,12 +22,6 @@ if ! echo "$template" | grep -qoP '\{\{'"$RE_VARNAME"'(=.+?)?\}\}'; then
     exit 0
 fi
 
-vars=$(printf '%s' "${template}" | grep -oE '\{\{'"$RE_VARNAME"'\}\}' | sort | uniq | sed -e 's/^{{//' -e 's/}}$//')
-
-var_value() {
-    eval printf '%s' "\$$1"
-}
-
 escape_delimiter() {
     delimiter="$1"
     shift
@@ -64,17 +58,17 @@ for default in ${defaults}; do
     replaces="-e 's/{{${var}=[^}]\+}}/$current/g' ${replaces}"
 done
 
-vars=$(printf '%s' "$vars" | sort | uniq)
-
 # Replace all {{VAR}} by $VAR value
+vars=$(printf '%s' "${template}" | grep -oE '\{\{'"$RE_VARNAME"'\}\}' | sort -u | sed -e 's/^{{//' -e 's/}}$//')
 for var in ${vars}; do
-    value="$(var_value "$var")"
-    if [ -z "${value}" ]; then
+    eval "isset=\${$var+x}"
+    if [ -z "$isset" ]; then
         echo "Warning: ${var} is not defined and no default is set, replacing with empty value" >&2
     fi
 
     # Escape slashes
-    value=$(printf '%s' "$value" | sed 's/\//\\\//g');
+    eval "value=\$${var}"
+    value=$(escape_delimiter '/' "$value")
     replaces="-e 's/{{$var}}/${value}/g' ${replaces}"
 done
 printf '%s' "${template}" | eval "sed $replaces"
