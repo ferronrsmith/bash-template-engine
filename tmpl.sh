@@ -20,12 +20,6 @@ fi
 # regex for a valid identifier
 RE_VARNAME='[A-Za-z_][A-Za-z0-9_]*'
 
-if ! echo "$template" | grep -qoP '\{\{'"$RE_VARNAME"'(=.+?)?\}\}'; then
-    echo "Warning: No variable was found in template, syntax is {{VAR}}" >&2
-    printf '%s' "$template"
-    exit 0
-fi
-
 # escapes given character
 # escape_delimiter <char to escape> [text to process, ...]
 escape_delimiter() {
@@ -77,4 +71,10 @@ for var in ${vars}; do
     value=$(escape_delimiter '/' "$value")
     replaces="-e 's/{{$var}}/${value}/g' ${replaces}"
 done
-printf '%s' "${template}" | eval "sed $replaces"
+
+if [ -z "$replaces" ]; then
+    sed_script='cat'
+else
+    sed_script="sed $replaces"
+fi
+printf '%s' "${template}" | eval "$sed_script"

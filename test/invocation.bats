@@ -15,33 +15,28 @@ setup() {
     bats_require_minimum_version 1.5.0
     run --separate-stderr tmpl.sh 'my test'
     assert_output 'my test'
-    assert_equal "$stderr" 'Warning: No variable was found in template, syntax is {{VAR}}'
 }
 
 @test 'run with empty template argument' {
     bats_require_minimum_version 1.5.0
     run --separate-stderr tmpl.sh ''
     assert_output ''
-    assert_equal "$stderr" 'Warning: No variable was found in template, syntax is {{VAR}}'
 }
 
 @test 'run with stdin' {
     bats_require_minimum_version 1.5.0
     run --separate-stderr sh -c "printf '%s' 'my test' | tmpl.sh"
     assert_output 'my test'
-    assert_equal "$stderr" 'Warning: No variable was found in template, syntax is {{VAR}}'
 }
 
 @test 'run with stdin and template argument' {
     bats_require_minimum_version 1.5.0
     run --separate-stderr sh -c "printf '%s' 'foo' | tmpl.sh 'bar'"
     assert_output 'bar'
-    assert_equal "$stderr" 'Warning: No variable was found in template, syntax is {{VAR}}'
 }
 
 @test 'run with to many arguments' {
     bats_require_minimum_version 1.5.0
     run --separate-stderr tmpl.sh 'foo' 'bar'
     assert_output 'foobar'
-    assert_equal "$stderr" 'Warning: No variable was found in template, syntax is {{VAR}}'
 }

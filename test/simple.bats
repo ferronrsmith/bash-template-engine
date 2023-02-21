@@ -73,7 +73,6 @@ setup() {
     bats_require_minimum_version 1.5.0
     myfoo=test run --keep-empty-lines --separate-stderr tmpl.sh 'my text here'
     assert_output 'my text here'
-    assert_equal "$stderr" 'Warning: No variable was found in template, syntax is {{VAR}}'
 }
 
 @test 'multiple vars' {
