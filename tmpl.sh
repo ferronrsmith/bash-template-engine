@@ -48,10 +48,9 @@ for default in ${defaults}; do
     eval "isset=\${$var+x}"
     if [ -z "$isset" ]; then
         current=${default#*=} # value is everthing after equal sign
-        eval "export $var='$current'"
-    else
-        current=$(eval "\${$var}")
+        eval "export $var=\"$current\""
     fi
+    eval "current=\"\${$var}\""
 
     # replace define line
     current=$(escape_delimiter '/' "$current")
