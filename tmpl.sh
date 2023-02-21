@@ -55,7 +55,7 @@ vars=$(printf '%s' "$vars" | sort | uniq)
 for var in ${vars}; do
     value="$(var_value ${var})"
     if [ -z "${value}" ]; then
-        echo "Warning: ${var} is not defined and no default is set, replacing by empty" >&2
+        echo "Warning: ${var} is not defined and no default is set, replacing with empty value" >&2
     fi
 
     # Escape slashes
